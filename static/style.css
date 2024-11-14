@@ -1,0 +1,17 @@
+.width-100 {
+    width: 100%;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.surface {
+    position: relative;
+    border-radius: 16px;
+    height: 100%;
+    width: 90%;
+    padding: 5%;
+
+    --md-elevation-level: 3;
+  }
