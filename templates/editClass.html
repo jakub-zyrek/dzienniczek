@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Edytowanie klasy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    {% if added %}
+        <meta http-equiv="refresh" content="0; /home/" />
+    {% endif %}
+
+    <script type="importmap">
+      {
+        "imports": {
+          "@material/web/": "https://esm.run/@material/web/"
+        }
+      }
+    </script>
+    <script type="module">
+      import '@material/web/all.js';
+      import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+
+      document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+    </script>
+
+    {% load static %}
+    <link rel="stylesheet" href="{% static "/style.css" %}">
+</head>
+<body>
+    <div style="width: 50%; margin: 50px auto auto;">
+        <div class="surface">
+            <md-elevation></md-elevation>
+            <h1 class="md-typescale-display-medium-prominent width-100 text-center">Dodaj klasę</h1>
+            <form action="?id={{ id }}" method="post">
+                <md-outlined-text-field label="Nazwa" name="name" value="{{ name }}" class="width-100"></md-outlined-text-field>
+                <br/>
+                <br/>
+                <md-outlined-select label="Nauczyciel" name="teacher" class="width-100">
+                    {% for teacher in teachers %}
+                        <md-select-option {% if teacher.0 == selectedTeacher %} selected {% endif %} value="{{ teacher.0 }}">
+                            <div slot="headline">{{ teacher.1 }} {{ teacher.2 }}</div>
+                        </md-select-option>
+                    {% endfor %}
+                </md-outlined-select>
+                <br/>
+                <br/>
+                <md-filled-button type="submit" class="width-100">Dodaj</md-filled-button>
+                <br/>
+                <br/>
+                <md-outlined-button type="button" class="width-100" href="/home/">Wróć</md-outlined-button>
+            </form>
+            <br/>
+            {% if error %}
+                <md-suggestion-chip label="Niepoprawny login lub hasło" class="width-100 text-center" style="--md-suggestion-chip-outline-color: #DE3730; --md-suggestion-chip-label-text-color: #DE3730; "></md-suggestion-chip>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

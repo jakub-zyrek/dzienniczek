@@ -12,12 +12,11 @@ def login(request):
 def changeGrades(x):
     grades = []
     for y in x:
-        print(y[0] % int(y[0]))
-        if y[0] % int(y[0]) == 0:
+        if (y[0]+1) % (int(y[0])+1) == 0:
             grades.append(int(y[0]))
-        elif y[0] % int(y[0]) == 0.5:
+        elif (y[0]+1) % int(y[0]+1) == 0.5:
             grades.append(str(int(y[0])) + "+")
-        elif y[0] % int(y[0]) == 0.75:
+        elif (y[0]+1) % int(y[0]+1) == 0.75:
             grades.append(str(int(y[0]) + 1) + "-")
         else:
             grades.append(y[0])
@@ -58,11 +57,18 @@ def home(request):
 
     if "grade" in request.POST.keys() and "addGradeId" in request.session.keys():
         grade = request.POST['grade']
+
+        if grade[-1] == "+":
+            grade = int(grade[0]) + 0.5
+        elif grade[-1] == "-":
+            grade = int(grade[0]) - 0.25
+
+
         name = request.POST['name']
         studentId = request.session['addGradeId']
         teacherId = request.session['id']
 
-        zapytanie = "INSERT INTO grades (grade, name, student, teacher) VALUES (" + grade + ", '" + name + "', " + studentId + ", " + str(teacherId) + ")"
+        zapytanie = "INSERT INTO grades (grade, name, student, teacher) VALUES (" + str(grade) + ", '" + name + "', " + studentId + ", " + str(teacherId) + ");"
         cursor.execute(zapytanie)
         connect.commit()
 
@@ -81,6 +87,8 @@ def home(request):
                 "role": request.session["role"],
                 "grades": grades(request.session["id"])
             })
+        elif request.session["role"] == 0:
+            return adminPanel(request)
     elif "login" in request.POST.keys():
         login = request.POST["login"]
         password = request.POST["password"]
@@ -110,6 +118,8 @@ def home(request):
                     "role": request.session["role"],
                     "grades": grades(request.session["id"])
                 })
+            elif request.session["role"] == 0:
+                return adminPanel(request)
 
     return render(request, "login.html")
 
@@ -124,3 +134,64 @@ def addgrade(request):
         return render(request, "addgrade.html")
     else:
         return render(request, "home.html")
+
+def adminPanel(request):
+    connect = sqlite3.connect("database/database.db")
+    cursor = connect.cursor()
+
+    zapytanie = "SELECT classes.id, classes.name, users.name, users.surname, (SELECT COUNT(*) FROM students_class WHERE class_id = classes.id) FROM classes JOIN users ON classes.teacher_id = users.id"
+    classes = cursor.execute(zapytanie).fetchall()
+
+    return render(request, "adminPanel.html", {
+        "name": request.session["name"],
+        "surname": request.session["surname"],
+        "role": request.session["role"],
+        "classes": classes
+    })
+
+def addclass(request):
+    connect = sqlite3.connect("database/database.db")
+    cursor = connect.cursor()
+
+    if "name" in request.POST.keys():
+        name = request.POST["name"]
+        teacher = request.POST["teacher"]
+
+        zapytanie = "INSERT INTO classes (name, teacher_id) VALUES (?, ?)"
+        cursor.execute(zapytanie, [name, teacher])
+        connect.commit()
+
+        return render(request, "addclass.html", {"added": True})
+    else:
+        zapytanie = "SELECT id, name, surname FROM users WHERE role = 1"
+        teachers = cursor.execute(zapytanie).fetchall()
+
+        return render(request, "addclass.html", {"teachers": teachers})
+
+
+def editclass(request):
+    if "id" in request.GET.keys():
+        connect = sqlite3.connect("database/database.db")
+        cursor = connect.cursor()
+
+        if "name" in request.POST.keys():
+            name = request.POST["name"]
+            teacher = request.POST["teacher"]
+
+            zapytanie = "UPDATE classes SET name = ?, teacher_id = ? WHERE id = ?"
+            cursor.execute(zapytanie, [name, teacher, request.GET["id"]])
+            connect.commit()
+
+            return render(request, "editClass.html", {"id": request.GET["id"], "added": True})
+
+        zapytanie = "SELECT id, name, surname FROM users WHERE role = 1"
+        teachers = cursor.execute(zapytanie).fetchall()
+
+        teachers
+
+        zapytanie = "SELECT name, teacher_id FROM classes WHERE id = ?"
+        result = cursor.execute(zapytanie, [request.GET["id"]]).fetchall()[0]
+
+        return render(request, "editClass.html", {"id": request.GET["id"], "teachers": teachers, "name": result[0], "selectedTeacher": result[1]})
+
+    return render(request, "editClass.html", {"added": True})

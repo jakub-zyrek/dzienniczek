@@ -24,5 +24,7 @@ urlpatterns = [
     path('', views.login),
     path('home/', views.home),
     path('logout/', views.logout),
-    path('addgrade/', views.addgrade)
+    path('addgrade/', views.addgrade),
+    path('addclass/', views.addclass),
+    path('editclass/', views.editclass)
 ]
