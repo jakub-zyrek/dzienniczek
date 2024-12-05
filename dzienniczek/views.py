@@ -5,7 +5,10 @@ import sqlite3
 
 def login(request):
     if "id" in request.session.keys():
-        return render(request, "home.html")
+        if request.session.keys() == 1:
+            return render(request, "adminPanel.html")
+        else:
+            return render(request, "home.html")
     else:
         return render(request, 'login.html')
 
@@ -187,11 +190,74 @@ def editclass(request):
         zapytanie = "SELECT id, name, surname FROM users WHERE role = 1"
         teachers = cursor.execute(zapytanie).fetchall()
 
-        teachers
-
         zapytanie = "SELECT name, teacher_id FROM classes WHERE id = ?"
         result = cursor.execute(zapytanie, [request.GET["id"]]).fetchall()[0]
 
         return render(request, "editClass.html", {"id": request.GET["id"], "teachers": teachers, "name": result[0], "selectedTeacher": result[1]})
 
     return render(request, "editClass.html", {"added": True})
+
+
+def studentclass(request):
+    connect = sqlite3.connect("database/database.db")
+    cursor = connect.cursor()
+
+    if "addId" in request.GET.keys() and "sessionTemp" in request.session.keys():
+        zapytanie = "INSERT INTO students_class (class_id, student_id) VALUES (?, ?)"
+        cursor.execute(zapytanie, [request.session["sessionTemp"], request.GET["addId"]])
+        connect.commit()
+
+        return render(request, "studentclass.html", {"changed": True, "class": request.session["sessionTemp"]})
+    elif "id" in request.GET.keys():
+        request.session["sessionTemp"] = request.GET["id"]
+        zapytanie = "SELECT students_class.id, name, surname, pesel FROM users JOIN students_class ON students_class.student_id = users.id WHERE role = 2 AND students_class.class_id = ? ORDER BY surname"
+        studentClass = cursor.execute(zapytanie, [request.GET['id']]).fetchall()
+
+        zapytanie2 = "SELECT classes.name, users.name, users.surname FROM classes JOIN users ON users.id = classes.teacher_id WHERE classes.id = ?"
+        result = cursor.execute(zapytanie2, [request.GET["id"]]).fetchall()[0]
+
+        zapytanie3 = "SELECT users.id, name, surname, pesel FROM users LEFT JOIN students_class ON students_class.student_id = users.id WHERE role = 2 AND students_class.student_id IS NULL ORDER BY surname"
+        studentAdd = cursor.execute(zapytanie3).fetchall()
+
+        return render(request, "studentclass.html", {"data": result, "students": studentClass, "studentsAdd": studentAdd})
+    elif "deleteId" in request.GET.keys() and "sessionTemp" in request.session.keys():
+        zapytanie = "DELETE FROM students_class WHERE id = ?"
+        cursor.execute(zapytanie, [request.GET["deleteId"]])
+        connect.commit()
+        return render(request, "studentclass.html", {"changed": True, "class": request.session["sessionTemp"]})
+
+
+def add(request):
+    connect = sqlite3.connect("database/database.db")
+    cursor = connect.cursor()
+
+    if "a" not in request.GET.keys():
+        return render(request, "add.html", {"added": True})
+
+    if "name" in request.POST.keys():
+        name = str(request.POST["name"]).strip().capitalize()
+        surname = str(request.POST["surname"]).strip().capitalize()
+        pesel = str(request.POST["pesel"])
+
+        if name == "" or surname == "" or len(pesel) != 11:
+            return render(request, "add.html", {"error": True})
+
+        role = 2
+
+        if request.GET["a"] == 's':
+            role = 2
+        elif request.GET["a"] == 't':
+            role = 1
+
+        login = surname.lower() + name.lower()
+
+        zapytanie = "INSERT INTO users (login, password, name, surname, role, pesel) VALUES (?, ?, ?, ?, ?, ?)"
+        cursor.execute(zapytanie, [login, login, name, surname, role, pesel])
+        connect.commit()
+
+        return render(request, "add.html", {"added": True})
+    else:
+        if request.GET["a"] == 's':
+            return render(request, "add.html", {"value": "ucznia"})
+        elif request.GET["a"] == 't':
+            return render(request, "add.html", {"value": "nauczyciela"})

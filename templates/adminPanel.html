@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Panel administratora</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
     <script type="importmap">
       {
         "imports": {
@@ -39,7 +40,8 @@
                     <th style="text-align: left; width: 20%">Nazwa</th>
                     <th style="width: 15%">Liczba uczniów</th>
                     <th>Wychowawca</th>
-                    <th style="width: 15%">&nbsp;</th>
+                    <th style="width: 7.5%">&nbsp;</th>
+                    <th style="width: 7.5%">&nbsp;</th>
                 </tr>
                 {% for class in classes %}
                     <tr>
@@ -47,6 +49,7 @@
                         <td class="text-center">{{ class.4 }}</td>
                         <td class="text-center">{{ class.2 }} {{ class.3 }}</td>
                         <td><md-outlined-button class="width-100" href="/editclass/?id={{ class.0 }}">Edytuj</md-outlined-button></td>
+                        <td><md-outlined-button class="width-100" href="/studentclass/?id={{ class.0 }}">Uczniowie</md-outlined-button></td>
                     </tr>
                 {% endfor %}
             </table>
@@ -54,5 +57,16 @@
             <md-outlined-button class="width-100" href="/addclass/">Dodaj</md-outlined-button>
         </div>
     </div>
+
+    <div style="width: 50%; margin: 50px auto auto;">
+        <div class="surface">
+            <md-elevation></md-elevation>
+            <md-outlined-button class="width-100" href="/addstudent/?a=s">Dodaj ucznia</md-outlined-button>
+            <br/>
+            <br/>
+            <md-outlined-button class="width-100" href="/addteacher/?a=t">Dodaj nauczyciela</md-outlined-button>
+        </div>
+    </div>
+
 </body>
 </html>
